@@ -1,0 +1,1714 @@
+............F......F...FF.FFFFFFFFFFFFFFFFFF.                            [100%]
+=================================== FAILURES ===================================
+_____________ test_tc13_register_duplicate_username_different_case _____________
+
+api = <conftest.Api object at 0x10b496540>
+
+    def test_tc13_register_duplicate_username_different_case(api):
+        """Scenario: Registering "Sarim" when "sarim" already exists
+        Steps: 1. Register "sarim"; 2. Register "Sarim"
+        Expected: 409 Conflict, usernames are unique regardless of letter case
+        Priority: Medium"""
+        api.register("sarim")
+>       assert api.register("Sarim").status_code == 409
+E       AssertionError: assert 201 == 409
+E        +  where 201 = <WrapperTestResponse streamed [201 CREATED]>.status_code
+E        +    where <WrapperTestResponse streamed [201 CREATED]> = register('Sarim')
+E        +      where register = <conftest.Api object at 0x10b496540>.register
+
+tests/test_phase2_auth.py:41: AssertionError
+__________________________ test_tc20_admin_adds_book ___________________________
+
+api = <conftest.Api object at 0x10b523c80>
+
+    def test_tc20_admin_adds_book(api):
+        """Scenario: Admin adds a new book with valid details
+        Steps: 1. Log in as admin; 2. POST /books with isbn, title, author, total_copies = 2
+        Expected: 201 Created; available_copies equals total_copies (2)
+        Priority: High"""
+>       res = api.add_book(api.admin())
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_phase3_books.py:10: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+______________________ test_tc24_add_book_duplicate_isbn _______________________
+
+api = <conftest.Api object at 0x10b4e78f0>
+
+    def test_tc24_add_book_duplicate_isbn(api):
+        """Scenario: Admin adds two books with the same ISBN
+        Steps: 1. Add a book; 2. Add another book with the same ISBN
+        Expected: Second request returns 409 Conflict
+        Priority: Medium"""
+        admin = api.admin()
+>       api.add_book(admin)
+
+tests/test_phase3_books.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+_____________________ test_tc25_search_by_title_and_author _____________________
+
+api = <conftest.Api object at 0x10b5020f0>
+
+    def test_tc25_search_by_title_and_author(api):
+        """Scenario: Public search matches part of the title or author, ignoring case
+        Steps: 1. Add "Software Testing" (Ron Patton) and "Clean Code" (Robert Martin); 2. GET /books?q=testing; 3. GET /books?q=MARTIN; 4. GET /books?q=zzz
+        Expected: Step 2 returns only Software Testing; step 3 only Clean Code; step 4 an empty list
+        Priority: High"""
+        admin = api.admin()
+>       api.add_book(admin, isbn=ISBNS[0], title="Software Testing", author="Ron Patton")
+
+tests/test_phase3_books.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+________________________ test_tc27_admin_updates_title _________________________
+
+api = <conftest.Api object at 0x10b4b64e0>
+
+    def test_tc27_admin_updates_title(api):
+        """Scenario: Admin corrects the title of an existing book
+        Steps: 1. Add a book; 2. PUT /books/1 {"title": "Software Testing, 2nd Ed."}; 3. GET /books/1
+        Expected: 200 OK; new title is saved, other fields unchanged
+        Priority: Medium"""
+        admin = api.admin()
+>       api.add_book(admin)
+
+tests/test_phase3_books.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+____________________ test_tc28_update_copies_below_borrowed ____________________
+
+api = <conftest.Api object at 0x10b469cd0>
+
+    def test_tc28_update_copies_below_borrowed(api):
+        """Scenario: Admin reduces total copies below the number currently borrowed
+        Steps: 1. Add a book with 2 copies; 2. Two members borrow it; 3. PUT /books/1 {"total_copies": 1}
+        Expected: 400 Bad Request; available_copies never becomes negative
+        Priority: High"""
+        admin = api.admin()
+>       api.add_book(admin, copies=2)
+
+tests/test_phase3_books.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+____________________ test_tc29_update_copies_invalid_value _____________________
+
+api = <conftest.Api object at 0x10b468830>
+
+    def test_tc29_update_copies_invalid_value(api):
+        """Scenario: Admin updates total_copies with text and with 0
+        Steps: 1. Add a book; 2. PUT /books/1 {"total_copies": "abc"}; 3. PUT /books/1 {"total_copies": 0}
+        Expected: 400 Bad Request both times (no server error)
+        Priority: Medium"""
+        admin = api.admin()
+>       api.add_book(admin)
+
+tests/test_phase3_books.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+____________________ test_tc30_delete_book_with_active_loan ____________________
+
+api = <conftest.Api object at 0x10b522330>
+
+    def test_tc30_delete_book_with_active_loan(api):
+        """Scenario: Admin tries to delete a book that a member has not returned
+        Steps: 1. Add a book; 2. Member borrows it; 3. DELETE /books/1; 4. Member checks /loans/me
+        Expected: 409 Conflict; book and the member's loan record still exist
+        Priority: High"""
+        admin = api.admin()
+>       api.add_book(admin)
+
+tests/test_phase3_books.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+____________________________ test_tc31_delete_book _____________________________
+
+api = <conftest.Api object at 0x10b496c90>
+
+    def test_tc31_delete_book(api):
+        """Scenario: Admin deletes a book with no loans
+        Steps: 1. Add a book; 2. DELETE /books/1; 3. GET /books/1
+        Expected: Delete returns 200; later GET returns 404
+        Priority: Medium"""
+        admin = api.admin()
+>       api.add_book(admin)
+
+tests/test_phase3_books.py:133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+____________________________ test_tc32_borrow_book _____________________________
+
+api = <conftest.Api object at 0x10b494770>
+
+    def test_tc32_borrow_book(api):
+        """Scenario: Member borrows an available book
+        Steps: 1. Admin adds a book with 2 copies; 2. Member POST /loans {"book_id": 1}; 3. GET /books/1
+        Expected: 201 Created; due date is 14 days after borrowing; available copies drop to 1
+        Priority: High"""
+>       setup_books(api)
+
+tests/test_phase4_loans.py:19: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+______________________ test_tc33_borrow_unavailable_book _______________________
+
+api = <conftest.Api object at 0x10b5f25a0>
+
+    def test_tc33_borrow_unavailable_book(api):
+        """Scenario: Member borrows a book whose only copy is already on loan
+        Steps: 1. Add a book with 1 copy; 2. user1 borrows it; 3. user2 tries to borrow it
+        Expected: 409 Conflict "no copies available"
+        Priority: High"""
+>       setup_books(api, copies=1)
+
+tests/test_phase4_loans.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+_______________________ test_tc34_borrow_same_book_twice _______________________
+
+api = <conftest.Api object at 0x10b55a330>
+
+    def test_tc34_borrow_same_book_twice(api):
+        """Scenario: Member tries to borrow a second copy of a book they already hold
+        Steps: 1. Add a book with 2 copies; 2. Member borrows it; 3. Member borrows it again
+        Expected: 409 Conflict "you already have this book"
+        Priority: Medium"""
+>       setup_books(api)
+
+tests/test_phase4_loans.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+____________________________ test_tc35_borrow_limit ____________________________
+
+api = <conftest.Api object at 0x10b5370b0>
+
+    def test_tc35_borrow_limit(api):
+        """Scenario: Borrowing limit of 3 active books (BVA on the limit)
+        Steps: 1. Add 4 books; 2. Member borrows books 1, 2 and 3; 3. Member borrows book 4
+        Expected: First 3 succeed (201); 4th returns 409 "borrowing limit of 3 books reached"
+        Priority: High"""
+>       setup_books(api, count=4)
+
+tests/test_phase4_loans.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+_______________________ test_tc36_borrow_invalid_book_id _______________________
+
+api = <conftest.Api object at 0x10b5c5610>
+
+    def test_tc36_borrow_invalid_book_id(api):
+        """Scenario: Borrowing with a book id that does not exist or is not an integer
+        Steps: 1. POST /loans {"book_id": 999}; 2. POST /loans {"book_id": "1"}; 3. POST /loans {}
+        Expected: 404 Not Found for 999; 400 Bad Request for "1" and for the empty body
+        Priority: Medium"""
+>       setup_books(api)
+
+tests/test_phase4_loans.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+___________________________ test_tc37_return_on_time ___________________________
+
+api = <conftest.Api object at 0x10b57e900>
+clock = <conftest.Clock object at 0x10b57e660>
+
+    def test_tc37_return_on_time(api, clock):
+        """Scenario: Member returns a book on the due date
+        Steps: 1. Borrow a book on 1-Sep-2026; 2. Move clock to 15-Sep-2026 (due date); 3. POST /loans/1/return
+        Expected: 200 OK; fine is 0; available copies go back to 2
+        Priority: High"""
+>       setup_books(api)
+
+tests/test_phase4_loans.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+__________________________ test_tc38_return_late_fine __________________________
+
+api = <conftest.Api object at 0x10b57ddf0>
+clock = <conftest.Clock object at 0x10b57e060>
+
+    def test_tc38_return_late_fine(api, clock):
+        """Scenario: Member returns a book 3 days after the due date
+        Steps: 1. Borrow on 1-Sep-2026 (due 15-Sep); 2. Move clock to 18-Sep-2026; 3. POST /loans/1/return
+        Expected: 200 OK; fine is Rs 15 (3 days x Rs 5)
+        Priority: High"""
+>       setup_books(api)
+
+tests/test_phase4_loans.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+______________________ test_tc39_return_other_users_loan _______________________
+
+api = <conftest.Api object at 0x10b54f7d0>
+
+    def test_tc39_return_other_users_loan(api):
+        """Scenario: A member tries to return a loan that belongs to someone else
+        Steps: 1. user1 borrows a book; 2. user2 POST /loans/1/return
+        Expected: 403 Forbidden; loan stays open
+        Priority: High"""
+>       setup_books(api)
+
+tests/test_phase4_loans.py:107: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+____________________________ test_tc40_return_twice ____________________________
+
+api = <conftest.Api object at 0x10b584c20>
+
+    def test_tc40_return_twice(api):
+        """Scenario: Returning the same loan twice
+        Steps: 1. Borrow a book; 2. Return it; 3. Return it again
+        Expected: Second return gives 409 Conflict; available copies are not increased twice
+        Priority: Medium"""
+>       setup_books(api)
+
+tests/test_phase4_loans.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+_________________________ test_tc41_my_loans_only_own __________________________
+
+api = <conftest.Api object at 0x10b54dbe0>
+
+    def test_tc41_my_loans_only_own(api):
+        """Scenario: GET /loans/me shows only the logged-in member's loans
+        Steps: 1. user1 borrows book 1; 2. user2 borrows book 2; 3. user1 GET /loans/me
+        Expected: Exactly one loan, for book 1
+        Priority: Medium"""
+>       setup_books(api, count=2)
+
+tests/test_phase4_loans.py:132: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+_____________________ test_tc42_overdue_report_admin_only ______________________
+
+api = <conftest.Api object at 0x10b585970>
+clock = <conftest.Clock object at 0x10b584b00>
+
+    def test_tc42_overdue_report_admin_only(api, clock):
+        """Scenario: Admin views overdue loans; member is refused
+        Steps: 1. Member borrows a book; 2. Move clock 20 days ahead; 3. Admin GET /loans?overdue=1; 4. Member GET /loans
+        Expected: Admin sees 1 overdue loan; member gets 403 Forbidden
+        Priority: Medium"""
+>       admin = setup_books(api)
+                ^^^^^^^^^^^^^^^^
+
+tests/test_phase4_loans.py:145: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_phase4_loans.py:10: in setup_books
+    api.add_book(admin, isbn=ISBNS[i], title=f"Book {i + 1}", copies=copies)
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+________________________ test_tc43_end_to_end_workflow _________________________
+
+api = <conftest.Api object at 0x10b581ee0>
+clock = <conftest.Clock object at 0x10b580350>
+
+    def test_tc43_end_to_end_workflow(api, clock):
+        """Scenario: Full member journey across all modules
+        Steps: 1. Admin adds a book; 2. Member registers and logs in; 3. Searches "testing"; 4. Borrows the book; 5. Returns it 2 days late; 6. Checks loan history; 7. Logs out
+        Expected: Every step succeeds; fine is Rs 10; copies are restored; token is invalid after logout
+        Priority: High"""
+>       api.add_book(api.admin())
+
+tests/test_phase5_integration.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+_______________________ test_tc44_sql_injection_attempts _______________________
+
+api = <conftest.Api object at 0x10b582e10>
+
+    def test_tc44_sql_injection_attempts(api):
+        """Scenario: SQL injection text in the search box and in the login username
+        Steps: 1. Add a book; 2. GET /books?q=' OR '1'='1; 3. POST /auth/login with username "admin' --"
+        Expected: Search returns an empty list (no rows leaked, no error); login returns 401
+        Priority: High"""
+>       api.add_book(api.admin())
+
+tests/test_phase5_integration.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:45: in add_book
+    return self.call("POST", "/books", admin_token,
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @bp.post("")
+    @admin_required
+    def add_book():
+        data = request.get_json(silent=True) or {}
+        problem = (check_isbn(data.get("isbn")) or check_text(data.get("title"), "title")
+                   or check_text(data.get("author"), "author") or check_copies(data.get("total_copies")))
+        if problem:
+            return error(problem, 400)
+        db = get_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO books (isbn, title, author, total_copies, available_copies) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (data["isbn"], data["title"].strip(), data["author"].strip(),
+                 data["total_copies"], data["total_copies"]),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            return error("a book with this isbn already exists", 409)
+>       return get_book(cur.lastrowid)[0], 201
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'Response' object is not subscriptable
+
+library/books.py:54: TypeError
+22 failed, 23 passed in 5.13s
