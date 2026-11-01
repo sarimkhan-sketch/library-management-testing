@@ -51,7 +51,7 @@ def add_book():
         db.commit()
     except sqlite3.IntegrityError:
         return error("a book with this isbn already exists", 409)
-    return get_book(cur.lastrowid)[0], 201
+    return get_book(cur.lastrowid), 201
 
 
 @bp.put("/<int:book_id>")
