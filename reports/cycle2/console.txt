@@ -1,0 +1,161 @@
+............F..............FFF....F..........                            [100%]
+=================================== FAILURES ===================================
+_____________ test_tc13_register_duplicate_username_different_case _____________
+
+api = <conftest.Api object at 0x1091cae70>
+
+    def test_tc13_register_duplicate_username_different_case(api):
+        """Scenario: Registering "Sarim" when "sarim" already exists
+        Steps: 1. Register "sarim"; 2. Register "Sarim"
+        Expected: 409 Conflict, usernames are unique regardless of letter case
+        Priority: Medium"""
+        api.register("sarim")
+>       assert api.register("Sarim").status_code == 409
+E       AssertionError: assert 201 == 409
+E        +  where 201 = <WrapperTestResponse streamed [201 CREATED]>.status_code
+E        +    where <WrapperTestResponse streamed [201 CREATED]> = register('Sarim')
+E        +      where register = <conftest.Api object at 0x1091cae70>.register
+
+tests/test_phase2_auth.py:41: AssertionError
+____________________ test_tc28_update_copies_below_borrowed ____________________
+
+api = <conftest.Api object at 0x109221bb0>
+
+    def test_tc28_update_copies_below_borrowed(api):
+        """Scenario: Admin reduces total copies below the number currently borrowed
+        Steps: 1. Add a book with 2 copies; 2. Two members borrow it; 3. PUT /books/1 {"total_copies": 1}
+        Expected: 400 Bad Request; available_copies never becomes negative
+        Priority: High"""
+        admin = api.admin()
+        api.add_book(admin, copies=2)
+        api.borrow(api.member("user1"), 1)
+        api.borrow(api.member("user2"), 1)
+        res = api.call("PUT", "/books/1", admin, {"total_copies": 1})
+>       assert res.status_code == 400
+E       assert 200 == 400
+E        +  where 200 = <WrapperTestResponse streamed [200 OK]>.status_code
+
+tests/test_phase3_books.py:99: AssertionError
+____________________ test_tc29_update_copies_invalid_value _____________________
+
+api = <conftest.Api object at 0x10916c980>
+
+    def test_tc29_update_copies_invalid_value(api):
+        """Scenario: Admin updates total_copies with text and with 0
+        Steps: 1. Add a book; 2. PUT /books/1 {"total_copies": "abc"}; 3. PUT /books/1 {"total_copies": 0}
+        Expected: 400 Bad Request both times (no server error)
+        Priority: Medium"""
+        admin = api.admin()
+        api.add_book(admin)
+>       assert api.call("PUT", "/books/1", admin, {"total_copies": "abc"}).status_code == 400
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_phase3_books.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+book_id = 1
+
+    @bp.put("/<int:book_id>")
+    @admin_required
+    def update_book(book_id):
+        db = get_db()
+        book = db.execute("SELECT * FROM books WHERE id = ?", (book_id,)).fetchone()
+        if book is None:
+            return error("book not found", 404)
+        data = request.get_json(silent=True) or {}
+        title = data.get("title", book["title"])
+        author = data.get("author", book["author"])
+        total = data.get("total_copies", book["total_copies"])
+        problem = check_text(title, "title") or check_text(author, "author")
+        if problem:
+            return error(problem, 400)
+>       available = book["available_copies"] + (total - book["total_copies"])
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: unsupported operand type(s) for -: 'str' and 'int'
+
+library/books.py:71: TypeError
+____________________ test_tc30_delete_book_with_active_loan ____________________
+
+api = <conftest.Api object at 0x109195d00>
+
+    def test_tc30_delete_book_with_active_loan(api):
+        """Scenario: Admin tries to delete a book that a member has not returned
+        Steps: 1. Add a book; 2. Member borrows it; 3. DELETE /books/1; 4. Member checks /loans/me
+        Expected: 409 Conflict; book and the member's loan record still exist
+        Priority: High"""
+        admin = api.admin()
+        api.add_book(admin)
+        member = api.member()
+        api.borrow(member, 1)
+>       assert api.call("DELETE", "/books/1", admin).status_code == 409
+E       AssertionError: assert 200 == 409
+E        +  where 200 = <WrapperTestResponse streamed [200 OK]>.status_code
+E        +    where <WrapperTestResponse streamed [200 OK]> = call('DELETE', '/books/1', '7fbba3a71ecea9d4764cd0b4e1f207f0bc6c362c4cb4fb94d070ddb52c87fc5a')
+E        +      where call = <conftest.Api object at 0x109195d00>.call
+
+tests/test_phase3_books.py:123: AssertionError
+____________________________ test_tc35_borrow_limit ____________________________
+
+api = <conftest.Api object at 0x10925b560>
+
+    def test_tc35_borrow_limit(api):
+        """Scenario: Borrowing limit of 3 active books (BVA on the limit)
+        Steps: 1. Add 4 books; 2. Member borrows books 1, 2 and 3; 3. Member borrows book 4
+        Expected: First 3 succeed (201); 4th returns 409 "borrowing limit of 3 books reached"
+        Priority: High"""
+        setup_books(api, count=4)
+        member = api.member()
+        for book_id in (1, 2, 3):
+            assert api.borrow(member, book_id).status_code == 201
+        res = api.borrow(member, 4)
+>       assert res.status_code == 409
+E       assert 201 == 409
+E        +  where 201 = <WrapperTestResponse streamed [201 CREATED]>.status_code
+
+tests/test_phase4_loans.py:59: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_phase2_auth.py::test_tc13_register_duplicate_username_different_case
+FAILED tests/test_phase3_books.py::test_tc28_update_copies_below_borrowed - a...
+FAILED tests/test_phase3_books.py::test_tc29_update_copies_invalid_value - Ty...
+FAILED tests/test_phase3_books.py::test_tc30_delete_book_with_active_loan - A...
+FAILED tests/test_phase4_loans.py::test_tc35_borrow_limit - assert 201 == 409
+5 failed, 40 passed in 6.92s

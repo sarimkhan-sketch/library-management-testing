@@ -1,0 +1,70 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0 -- /Users/harismoh/library-management-testing/.venv/bin/python
+rootdir: /Users/harismoh/library-management-testing
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0
+collecting ... collected 45 items
+
+tests/test_phase1_validation.py::test_tc01_valid_username_accepted PASSED [  2%]
+tests/test_phase1_validation.py::test_tc02_username_length_boundaries PASSED [  4%]
+tests/test_phase1_validation.py::test_tc03_invalid_username_classes_rejected PASSED [  6%]
+tests/test_phase1_validation.py::test_tc04_password_length_boundaries PASSED [  8%]
+tests/test_phase1_validation.py::test_tc05_valid_isbn_accepted PASSED    [ 11%]
+tests/test_phase1_validation.py::test_tc06_invalid_isbn_rejected PASSED  [ 13%]
+tests/test_phase1_validation.py::test_tc07_copies_boundaries PASSED      [ 15%]
+tests/test_phase1_validation.py::test_tc08_copies_wrong_type_rejected PASSED [ 17%]
+tests/test_phase1_validation.py::test_tc09_fine_calculation PASSED       [ 20%]
+tests/test_phase2_auth.py::test_tc10_register_member PASSED              [ 22%]
+tests/test_phase2_auth.py::test_tc11_register_missing_fields PASSED      [ 24%]
+tests/test_phase2_auth.py::test_tc12_register_duplicate_username PASSED  [ 26%]
+tests/test_phase2_auth.py::test_tc13_register_duplicate_username_different_case PASSED [ 28%]
+tests/test_phase2_auth.py::test_tc14_password_is_hashed PASSED           [ 31%]
+tests/test_phase2_auth.py::test_tc15_register_cannot_choose_admin_role PASSED [ 33%]
+tests/test_phase2_auth.py::test_tc16_login_valid PASSED                  [ 35%]
+tests/test_phase2_auth.py::test_tc17_login_invalid_credentials PASSED    [ 37%]
+tests/test_phase2_auth.py::test_tc18_protected_endpoint_requires_valid_token PASSED [ 40%]
+tests/test_phase2_auth.py::test_tc19_logout_invalidates_token PASSED     [ 42%]
+tests/test_phase3_books.py::test_tc20_admin_adds_book PASSED             [ 44%]
+tests/test_phase3_books.py::test_tc21_member_cannot_add_book PASSED      [ 46%]
+tests/test_phase3_books.py::test_tc22_add_book_invalid_isbn PASSED       [ 48%]
+tests/test_phase3_books.py::test_tc23_add_book_empty_title PASSED        [ 51%]
+tests/test_phase3_books.py::test_tc24_add_book_duplicate_isbn PASSED     [ 53%]
+tests/test_phase3_books.py::test_tc25_search_by_title_and_author PASSED  [ 55%]
+tests/test_phase3_books.py::test_tc26_get_unknown_book PASSED            [ 57%]
+tests/test_phase3_books.py::test_tc27_admin_updates_title PASSED         [ 60%]
+tests/test_phase3_books.py::test_tc28_update_copies_below_borrowed PASSED [ 62%]
+tests/test_phase3_books.py::test_tc29_update_copies_invalid_value PASSED [ 64%]
+tests/test_phase3_books.py::test_tc30_delete_book_with_active_loan PASSED [ 66%]
+tests/test_phase3_books.py::test_tc31_delete_book PASSED                 [ 68%]
+tests/test_phase4_loans.py::test_tc32_borrow_book PASSED                 [ 71%]
+tests/test_phase4_loans.py::test_tc33_borrow_unavailable_book PASSED     [ 73%]
+tests/test_phase4_loans.py::test_tc34_borrow_same_book_twice PASSED      [ 75%]
+tests/test_phase4_loans.py::test_tc35_borrow_limit PASSED                [ 77%]
+tests/test_phase4_loans.py::test_tc36_borrow_invalid_book_id PASSED      [ 80%]
+tests/test_phase4_loans.py::test_tc37_return_on_time PASSED              [ 82%]
+tests/test_phase4_loans.py::test_tc38_return_late_fine PASSED            [ 84%]
+tests/test_phase4_loans.py::test_tc39_return_other_users_loan PASSED     [ 86%]
+tests/test_phase4_loans.py::test_tc40_return_twice PASSED                [ 88%]
+tests/test_phase4_loans.py::test_tc41_my_loans_only_own PASSED           [ 91%]
+tests/test_phase4_loans.py::test_tc42_overdue_report_admin_only PASSED   [ 93%]
+tests/test_phase5_integration.py::test_tc43_end_to_end_workflow PASSED   [ 95%]
+tests/test_phase5_integration.py::test_tc44_sql_injection_attempts PASSED [ 97%]
+tests/test_phase5_integration.py::test_tc45_error_handling_unknown_route_and_bad_json PASSED [100%]
+
+- generated xml file: /Users/harismoh/library-management-testing/reports/cycle3/junit.xml -
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.12.16-final-0 _______________
+
+Name                    Stmts   Miss  Cover   Missing
+-----------------------------------------------------
+library/__init__.py        26      1    96%   30
+library/auth.py            63      0   100%
+library/books.py           65      2    97%   63, 88
+library/db.py              21      0   100%
+library/loans.py           73      1    99%   69
+library/validators.py      26      0   100%
+-----------------------------------------------------
+TOTAL                     274      4    99%
+Coverage JSON written to file reports/cycle3/coverage.json
+============================== 45 passed in 6.96s ==============================

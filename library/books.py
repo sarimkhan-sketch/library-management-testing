@@ -65,9 +65,12 @@ def update_book(book_id):
     title = data.get("title", book["title"])
     author = data.get("author", book["author"])
     total = data.get("total_copies", book["total_copies"])
-    problem = check_text(title, "title") or check_text(author, "author")
+    problem = check_text(title, "title") or check_text(author, "author") or check_copies(total)
     if problem:
         return error(problem, 400)
+    on_loan = book["total_copies"] - book["available_copies"]
+    if total < on_loan:
+        return error(f"{on_loan} copies are on loan; total_copies cannot be lower", 400)
     available = book["available_copies"] + (total - book["total_copies"])
     db.execute(
         "UPDATE books SET title = ?, author = ?, total_copies = ?, available_copies = ? WHERE id = ?",
@@ -83,7 +86,8 @@ def delete_book(book_id):
     db = get_db()
     if db.execute("SELECT 1 FROM books WHERE id = ?", (book_id,)).fetchone() is None:
         return error("book not found", 404)
-    db.execute("DELETE FROM loans WHERE book_id = ?", (book_id,))
+    if db.execute("SELECT 1 FROM loans WHERE book_id = ?", (book_id,)).fetchone():
+        return error("book has loan records and cannot be deleted", 409)
     db.execute("DELETE FROM books WHERE id = ?", (book_id,))
     db.commit()
     return jsonify({"message": "book deleted"})

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="45" time="6.903" timestamp="2026-11-01T10:35:09.294288-07:00" hostname="6c7e67e294eb"><testcase classname="tests.test_phase1_validation" name="test_tc01_valid_username_accepted" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc02_username_length_boundaries" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc03_invalid_username_classes_rejected" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc04_password_length_boundaries" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc05_valid_isbn_accepted" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc06_invalid_isbn_rejected" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc07_copies_boundaries" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc08_copies_wrong_type_rejected" time="0.000" /><testcase classname="tests.test_phase1_validation" name="test_tc09_fine_calculation" time="0.000" /><testcase classname="tests.test_phase2_auth" name="test_tc10_register_member" time="0.132" /><testcase classname="tests.test_phase2_auth" name="test_tc11_register_missing_fields" time="0.067" /><testcase classname="tests.test_phase2_auth" name="test_tc12_register_duplicate_username" time="0.179" /><testcase classname="tests.test_phase2_auth" name="test_tc13_register_duplicate_username_different_case" time="0.186"><failure message="AssertionError: assert 201 == 409&#10; +  where 201 = &lt;WrapperTestResponse streamed [201 CREATED]&gt;.status_code&#10; +    where &lt;WrapperTestResponse streamed [201 CREATED]&gt; = register('Sarim')&#10; +      where register = &lt;conftest.Api object at 0x1091cae70&gt;.register">api = &lt;conftest.Api object at 0x1091cae70&gt;
+
+    def test_tc13_register_duplicate_username_different_case(api):
+        """Scenario: Registering "Sarim" when "sarim" already exists
+        Steps: 1. Register "sarim"; 2. Register "Sarim"
+        Expected: 409 Conflict, usernames are unique regardless of letter case
+        Priority: Medium"""
+        api.register("sarim")
+&gt;       assert api.register("Sarim").status_code == 409
+E       AssertionError: assert 201 == 409
+E        +  where 201 = &lt;WrapperTestResponse streamed [201 CREATED]&gt;.status_code
+E        +    where &lt;WrapperTestResponse streamed [201 CREATED]&gt; = register('Sarim')
+E        +      where register = &lt;conftest.Api object at 0x1091cae70&gt;.register
+
+tests/test_phase2_auth.py:41: AssertionError</failure></testcase><testcase classname="tests.test_phase2_auth" name="test_tc14_password_is_hashed" time="0.121" /><testcase classname="tests.test_phase2_auth" name="test_tc15_register_cannot_choose_admin_role" time="0.182" /><testcase classname="tests.test_phase2_auth" name="test_tc16_login_valid" time="0.184" /><testcase classname="tests.test_phase2_auth" name="test_tc17_login_invalid_credentials" time="0.179" /><testcase classname="tests.test_phase2_auth" name="test_tc18_protected_endpoint_requires_valid_token" time="0.062" /><testcase classname="tests.test_phase2_auth" name="test_tc19_logout_invalidates_token" time="0.175" /><testcase classname="tests.test_phase3_books" name="test_tc20_admin_adds_book" time="0.126" /><testcase classname="tests.test_phase3_books" name="test_tc21_member_cannot_add_book" time="0.177" /><testcase classname="tests.test_phase3_books" name="test_tc22_add_book_invalid_isbn" time="0.119" /><testcase classname="tests.test_phase3_books" name="test_tc23_add_book_empty_title" time="0.123" /><testcase classname="tests.test_phase3_books" name="test_tc24_add_book_duplicate_isbn" time="0.123" /><testcase classname="tests.test_phase3_books" name="test_tc25_search_by_title_and_author" time="0.121" /><testcase classname="tests.test_phase3_books" name="test_tc26_get_unknown_book" time="0.062" /><testcase classname="tests.test_phase3_books" name="test_tc27_admin_updates_title" time="0.125" /><testcase classname="tests.test_phase3_books" name="test_tc28_update_copies_below_borrowed" time="0.366"><failure message="assert 200 == 400&#10; +  where 200 = &lt;WrapperTestResponse streamed [200 OK]&gt;.status_code">api = &lt;conftest.Api object at 0x109221bb0&gt;
+
+    def test_tc28_update_copies_below_borrowed(api):
+        """Scenario: Admin reduces total copies below the number currently borrowed
+        Steps: 1. Add a book with 2 copies; 2. Two members borrow it; 3. PUT /books/1 {"total_copies": 1}
+        Expected: 400 Bad Request; available_copies never becomes negative
+        Priority: High"""
+        admin = api.admin()
+        api.add_book(admin, copies=2)
+        api.borrow(api.member("user1"), 1)
+        api.borrow(api.member("user2"), 1)
+        res = api.call("PUT", "/books/1", admin, {"total_copies": 1})
+&gt;       assert res.status_code == 400
+E       assert 200 == 400
+E        +  where 200 = &lt;WrapperTestResponse streamed [200 OK]&gt;.status_code
+
+tests/test_phase3_books.py:99: AssertionError</failure></testcase><testcase classname="tests.test_phase3_books" name="test_tc29_update_copies_invalid_value" time="0.121"><failure message="TypeError: unsupported operand type(s) for -: 'str' and 'int'">api = &lt;conftest.Api object at 0x10916c980&gt;
+
+    def test_tc29_update_copies_invalid_value(api):
+        """Scenario: Admin updates total_copies with text and with 0
+        Steps: 1. Add a book; 2. PUT /books/1 {"total_copies": "abc"}; 3. PUT /books/1 {"total_copies": 0}
+        Expected: 400 Bad Request both times (no server error)
+        Priority: Medium"""
+        admin = api.admin()
+        api.add_book(admin)
+&gt;       assert api.call("PUT", "/books/1", admin, {"total_copies": "abc"}).status_code == 400
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_phase3_books.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/conftest.py:41: in call
+    return self.client.open(url, method=method, headers=headers, json=json)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/testing.py:235: in open
+    response = super().open(
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1120: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:992: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/werkzeug/test.py:1268: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/flask/app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:32: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+library/auth.py:42: in wrapped
+    return view(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+book_id = 1
+
+    @bp.put("/&lt;int:book_id&gt;")
+    @admin_required
+    def update_book(book_id):
+        db = get_db()
+        book = db.execute("SELECT * FROM books WHERE id = ?", (book_id,)).fetchone()
+        if book is None:
+            return error("book not found", 404)
+        data = request.get_json(silent=True) or {}
+        title = data.get("title", book["title"])
+        author = data.get("author", book["author"])
+        total = data.get("total_copies", book["total_copies"])
+        problem = check_text(title, "title") or check_text(author, "author")
+        if problem:
+            return error(problem, 400)
+&gt;       available = book["available_copies"] + (total - book["total_copies"])
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: unsupported operand type(s) for -: 'str' and 'int'
+
+library/books.py:71: TypeError</failure></testcase><testcase classname="tests.test_phase3_books" name="test_tc30_delete_book_with_active_loan" time="0.236"><failure message="AssertionError: assert 200 == 409&#10; +  where 200 = &lt;WrapperTestResponse streamed [200 OK]&gt;.status_code&#10; +    where &lt;WrapperTestResponse streamed [200 OK]&gt; = call('DELETE', '/books/1', '7fbba3a71ecea9d4764cd0b4e1f207f0bc6c362c4cb4fb94d070ddb52c87fc5a')&#10; +      where call = &lt;conftest.Api object at 0x109195d00&gt;.call">api = &lt;conftest.Api object at 0x109195d00&gt;
+
+    def test_tc30_delete_book_with_active_loan(api):
+        """Scenario: Admin tries to delete a book that a member has not returned
+        Steps: 1. Add a book; 2. Member borrows it; 3. DELETE /books/1; 4. Member checks /loans/me
+        Expected: 409 Conflict; book and the member's loan record still exist
+        Priority: High"""
+        admin = api.admin()
+        api.add_book(admin)
+        member = api.member()
+        api.borrow(member, 1)
+&gt;       assert api.call("DELETE", "/books/1", admin).status_code == 409
+E       AssertionError: assert 200 == 409
+E        +  where 200 = &lt;WrapperTestResponse streamed [200 OK]&gt;.status_code
+E        +    where &lt;WrapperTestResponse streamed [200 OK]&gt; = call('DELETE', '/books/1', '7fbba3a71ecea9d4764cd0b4e1f207f0bc6c362c4cb4fb94d070ddb52c87fc5a')
+E        +      where call = &lt;conftest.Api object at 0x109195d00&gt;.call
+
+tests/test_phase3_books.py:123: AssertionError</failure></testcase><testcase classname="tests.test_phase3_books" name="test_tc31_delete_book" time="0.125" /><testcase classname="tests.test_phase4_loans" name="test_tc32_borrow_book" time="0.253" /><testcase classname="tests.test_phase4_loans" name="test_tc33_borrow_unavailable_book" time="0.367" /><testcase classname="tests.test_phase4_loans" name="test_tc34_borrow_same_book_twice" time="0.246" /><testcase classname="tests.test_phase4_loans" name="test_tc35_borrow_limit" time="0.251"><failure message="assert 201 == 409&#10; +  where 201 = &lt;WrapperTestResponse streamed [201 CREATED]&gt;.status_code">api = &lt;conftest.Api object at 0x10925b560&gt;
+
+    def test_tc35_borrow_limit(api):
+        """Scenario: Borrowing limit of 3 active books (BVA on the limit)
+        Steps: 1. Add 4 books; 2. Member borrows books 1, 2 and 3; 3. Member borrows book 4
+        Expected: First 3 succeed (201); 4th returns 409 "borrowing limit of 3 books reached"
+        Priority: High"""
+        setup_books(api, count=4)
+        member = api.member()
+        for book_id in (1, 2, 3):
+            assert api.borrow(member, book_id).status_code == 201
+        res = api.borrow(member, 4)
+&gt;       assert res.status_code == 409
+E       assert 201 == 409
+E        +  where 201 = &lt;WrapperTestResponse streamed [201 CREATED]&gt;.status_code
+
+tests/test_phase4_loans.py:59: AssertionError</failure></testcase><testcase classname="tests.test_phase4_loans" name="test_tc36_borrow_invalid_book_id" time="0.246" /><testcase classname="tests.test_phase4_loans" name="test_tc37_return_on_time" time="0.252" /><testcase classname="tests.test_phase4_loans" name="test_tc38_return_late_fine" time="0.255" /><testcase classname="tests.test_phase4_loans" name="test_tc39_return_other_users_loan" time="0.368" /><testcase classname="tests.test_phase4_loans" name="test_tc40_return_twice" time="0.250" /><testcase classname="tests.test_phase4_loans" name="test_tc41_my_loans_only_own" time="0.366" /><testcase classname="tests.test_phase4_loans" name="test_tc42_overdue_report_admin_only" time="0.245" /><testcase classname="tests.test_phase5_integration" name="test_tc43_end_to_end_workflow" time="0.249" /><testcase classname="tests.test_phase5_integration" name="test_tc44_sql_injection_attempts" time="0.124" /><testcase classname="tests.test_phase5_integration" name="test_tc45_error_handling_unknown_route_and_bad_json" time="0.065" /></testsuite></testsuites>

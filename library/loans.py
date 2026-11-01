@@ -44,7 +44,7 @@ def borrow():
     ).fetchall()
     if any(r["book_id"] == book_id for r in active):
         return error("you already have this book", 409)
-    if len(active) > MAX_ACTIVE_LOANS:
+    if len(active) >= MAX_ACTIVE_LOANS:
         return error(f"borrowing limit of {MAX_ACTIVE_LOANS} books reached", 409)
     if book["available_copies"] < 1:
         return error("no copies available", 409)
