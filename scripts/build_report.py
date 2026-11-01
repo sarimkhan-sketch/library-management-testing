@@ -250,7 +250,7 @@ para("All evidence files are committed in the repository under reports/: junit.x
      "python -m pytest.")
 table([["Area", "Evidence", "Result"],
        ["Requirements verification", "Each rule (3-book limit, 14-day loan, Rs 5/day fine, unique ISBN, admin-only catalogue changes) has at least one test case", "All rules covered; see Section 5"],
-       ["UI and navigation", "Not applicable: the project is a REST API with no user interface. Routing is tested instead: unknown URL → 404 JSON, wrong method → 405 JSON (TC-45)", "PASS"],
+       ["UI and navigation", "Demo web page (library/static) checked in a real browser by scripts/ui_check.py (Playwright): 14/14 checks pass, see Section 6.1. API routing: unknown URL → 404 JSON, wrong method → 405 JSON (TC-45)", "PASS"],
        ["Authentication", "TC-10 to TC-19: register, duplicate names, hashing, login, invalid tokens, logout", "10/10 PASS"],
        ["Functional", "TC-20 to TC-42: catalogue and loan operations", "23/23 PASS"],
        ["Database", "TC-14 reads the users table directly; TC-28, TC-30, TC-37, TC-40 check stored stock and loan rows", "PASS"],
@@ -259,6 +259,14 @@ table([["Area", "Evidence", "Result"],
        ["Code coverage", f"pytest-cov, cycle 3: {COV_TOTAL['covered_lines']} of {COV_TOTAL['num_statements']} statements executed", f"{COV_TOTAL['percent_covered']:.1f}%"]],
       [3.4, 10, 3.2])
 figure(FIGURES / "fig2_coverage.png", "Figure 1: Statement coverage per module after cycle 3.", 14)
+doc.add_heading("6.1 Web front end check", 2)
+para("A demo web page (library/static: index.html, app.js, style.css) was added after the three test cycles. "
+     "It only calls the JSON API, so every rule is still enforced and tested on the server. It is not part of "
+     "the 45 test cases above; instead scripts/ui_check.py uses Playwright to drive Microsoft Edge or Chrome "
+     "through the main flows on a fresh database. Its output is saved in reports/ui_check.txt.")
+ui_lines = [l.strip() for l in (ROOT / "reports" / "ui_check.txt").read_text().splitlines() if l.strip().startswith("[")]
+table([["Browser check", "Result"]] + [[l[7:], l[1:5]] for l in ui_lines], [13, 3], size=9, status_col=1)
+figure(FIGURES / "ui_member.png", "Figure 2: Member view during the browser check: the 4th borrow is refused (409) and the overdue fine is shown.", 14)
 para("Automation. All 45 test cases are automated and run in about 7 seconds. The same suite can run on "
      "every push using GitHub Actions; a workflow file (.github/workflows/tests.yml) that runs it on "
      "Windows and Ubuntu is included in the repository. Possible additions: Postman/Newman collections for "
@@ -281,7 +289,7 @@ table([["Measure", "Value"],
        ["Overall pass percentage (all executions)", f"{100 * TOTAL_PASS / TOTAL_RUNS:.1f}%"],
        ["Pass percentage in final regression cycle", f"{100 * CYCLES[-1]['passed'] / CYCLES[-1]['run']:.1f}%"]],
       [10, 4])
-figure(FIGURES / "fig1_cycles.png", "Figure 2: Passed and failed test cases in each cycle.", 14)
+figure(FIGURES / "fig1_cycles.png", "Figure 3: Passed and failed test cases in each cycle.", 14)
 para("Cycle 1 had 22 failures, but 21 of them were caused by one crash (DEF-01): adding a book returned "
      "HTTP 500, so every test that needed a book failed at setup. Fixing that single line exposed five "
      "real logic defects in cycle 2. After fixing those, the full suite passed in cycle 3.")

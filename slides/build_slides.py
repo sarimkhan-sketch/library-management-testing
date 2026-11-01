@@ -265,20 +265,31 @@ for d in DEFECTS:
     rows.append([d["id"], d["severity"], short[d["id"]], f"{d['tc']} ({d['found']})" if d["kind"] == "Reproduced" else "Code review", d["status"]])
 table(s, Inches(0.5), Inches(1.8), Inches(12.3), rows, [1.1, 1.2, 6.2, 2.2, 1.2], size=15, row_h=0.5, status_col=4)
 
-# 9. Demo
-s = new_slide("Live demo", "Works on Windows: no server, browser or Postman needed")
+# 9. Web front end
+s = new_slide("Demo: City Library web page", "python run.py  →  http://127.0.0.1:5000  (plain HTML + JS, works offline)")
+s.shapes.add_picture(str(FIGURES / "ui_member.png"), Inches(0.5), Inches(1.75), height=Inches(5.1))
+bullets(s, Inches(6.55), Inches(1.8), Inches(6.35), Inches(5.1), [
+    ("Member view", "Search, borrow, return; overdue loans show the fine before returning"),
+    ("Admin view", "Add books, change copies, delete, all / overdue loans"),
+    ("Errors shown as status + message", "e.g. red “409 · borrowing limit of 3 books reached”"),
+    ("API log panel", "Every request and its HTTP code, so each click is a visible test case"),
+    ("Browser check", "scripts/ui_check.py drives Edge/Chrome with Playwright: 14/14 checks pass, incl. XSS"),
+], size=16)
+
+# 10. Live demo commands
+s = new_slide("Live demo plan", "Runs on Windows with Python only; no Postman or Node.js")
 for i, (cmd, what) in enumerate([
+        ("python run.py", "website with sample data; log in as sarim / secret123 and admin"),
         ("python -m pytest -v", "runs all 45 test cases (~7 s)"),
         ("python -m pytest --cov=library", "same run + coverage table"),
-        ("python demo.py", "15-step walkthrough: login, add book, borrow, late return, fine, logout"),
-        ("python run.py", "starts the API at http://127.0.0.1:5000")]):
+        ("python scripts/ui_check.py --show", "watch the browser test click through the site")]):
     y = Inches(1.9 + i * 1.2)
     rect(s, Inches(0.5), y, Inches(6.0), Inches(0.85), NAVY, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
     text(s, Inches(0.5), y, Inches(6.0), Inches(0.85), cmd, size=17, color=WHITE, font="Menlo",
          align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
     text(s, Inches(6.8), y, Inches(6.0), Inches(0.85), what, size=17, color=INK_2, anchor=MSO_ANCHOR.MIDDLE)
 
-# 10. Conclusion
+# 11. Conclusion
 s = new_slide("Conclusion")
 bullets(s, Inches(0.5), Inches(1.4), Inches(6.3), Inches(5.4), [
     ("Testing found real bugs", "6 defects, including a crash and two wrong business rules."),
@@ -294,7 +305,7 @@ bullets(s, Inches(7.2), Inches(2.0), Inches(5.6), Inches(4.8), [
     "Run the suite on every push with GitHub Actions",
 ], size=18)
 
-# 11. Thanks
+# 12. Thanks
 s = prs.slides.add_slide(BLANK)
 rect(s, 0, 0, W, H, NAVY)
 text(s, Inches(0.8), Inches(2.5), Inches(11.7), Inches(1.2), "Thank you  ·  Questions?", size=44,

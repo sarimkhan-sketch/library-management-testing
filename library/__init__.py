@@ -27,6 +27,11 @@ def create_app(config=None):
 
     @app.get("/")
     def index():
+        # Demo web page (library/static/index.html); it only calls the JSON API below.
+        return app.send_static_file("index.html")
+
+    @app.get("/api")
+    def api_info():
         return jsonify({"service": "Library Management System", "version": __version__})
 
     @app.errorhandler(404)

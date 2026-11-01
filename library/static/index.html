@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>City Library</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="logo">📚</span> City Library <small>Library Management System</small></div>
+    <div id="who" class="who"></div>
+  </header>
+
+  <main>
+    <!-- Login / register: shown when nobody is logged in -->
+    <section id="auth" class="card narrow">
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Log in</button>
+        <button class="tab" data-tab="register">Register</button>
+      </div>
+      <form id="auth-form">
+        <label>Username <input name="username" autocomplete="username" placeholder="e.g. sarim"></label>
+        <label>Password <input name="password" type="password" autocomplete="current-password" placeholder="6-64 characters"></label>
+        <button type="submit" class="primary" id="auth-submit">Log in</button>
+      </form>
+      <p class="hint">Guests can still search the catalogue below.</p>
+    </section>
+
+    <section class="card">
+      <div class="row between">
+        <h2>Catalogue</h2>
+        <input id="search" type="search" placeholder="Search title or author…">
+      </div>
+      <div id="books" class="books"></div>
+    </section>
+
+    <section id="my-loans" class="card hidden">
+      <h2>My loans <span class="muted">(max 3 at a time · 14 days · Rs 5 per late day)</span></h2>
+      <table><thead><tr><th>Book</th><th>Borrowed</th><th>Due</th><th>Status</th><th></th></tr></thead>
+        <tbody id="my-loans-body"></tbody></table>
+    </section>
+
+    <section id="admin" class="card hidden">
+      <h2>Admin: add a book</h2>
+      <form id="book-form" class="grid">
+        <label>ISBN-13 <input name="isbn" placeholder="9780306406157"></label>
+        <label>Title <input name="title"></label>
+        <label>Author <input name="author"></label>
+        <label>Copies <input name="total_copies" type="number" value="1"></label>
+        <button type="submit" class="primary">Add book</button>
+      </form>
+      <div class="row between">
+        <h2>Admin: all loans</h2>
+        <label class="inline"><input type="checkbox" id="overdue-only"> Overdue only</label>
+      </div>
+      <table><thead><tr><th>Loan</th><th>Member</th><th>Book</th><th>Due</th><th>Returned</th><th>Fine</th></tr></thead>
+        <tbody id="all-loans-body"></tbody></table>
+    </section>
+
+    <!-- Every request the page makes, with its HTTP status: useful when demonstrating test cases -->
+    <section class="card">
+      <div class="row between">
+        <h2>API log</h2>
+        <button id="clear-log" class="ghost">Clear</button>
+      </div>
+      <ul id="log" class="log"></ul>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

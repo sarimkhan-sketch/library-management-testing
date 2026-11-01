@@ -1,0 +1,17 @@
+UI check in chrome at http://127.0.0.1:5001/
+  [PASS] Guest sees the 6 sample books
+  [PASS] Guest sees no Borrow buttons
+  [PASS] Search 'clean' shows only Clean Code
+  [PASS] Wrong password shows 401 message
+  [PASS] Seeded loan shows as overdue with Rs 30 fine
+  [PASS] Borrowing reduces available copies
+  [PASS] 4th book refused: 409 borrowing limit
+  [PASS] Late return charges Rs 30
+  [PASS] Logout returns to guest view
+  [PASS] Admin panel visible to admin
+  [PASS] Bad ISBN rejected: 400 checksum
+  [PASS] Overdue filter: no overdue loans after return
+  [PASS] HTML in a title is shown as text, not run (XSS)
+  [PASS] No JavaScript errors on the page
+
+14/14 UI checks passed
