@@ -12,7 +12,7 @@ from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.util import Emu, Inches, Pt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from report_data import (COURSE, DEFECTS, FIGURES, PHASES, PROGRAMME, PROJECT, REG_NO,  # noqa: E402
+from report_data import (COURSE, DEFECTS, FIGURES, GUIDE, PHASES, PROGRAMME, PROJECT, REG_NO,  # noqa: E402
                          REPO_URL, ROOT, STUDENT, UNIVERSITY, load)
 
 OUT = ROOT / "slides" / "Library_Management_Testing.pptx"
@@ -141,7 +141,7 @@ text(s, Inches(1.15), Inches(3.05), Inches(11), Inches(1.2),
 text(s, Inches(1.15), Inches(4.8), Inches(11), Inches(1.8), [
     (f"{STUDENT}  ({REG_NO})", {"size": 20, "bold": True, "color": WHITE}),
     (f"{COURSE}  ·  {PROGRAMME}", {"size": 16, "color": PALE}),
-    (UNIVERSITY, {"size": 16, "color": PALE}),
+    (f"Guide: {GUIDE}  ·  {UNIVERSITY}", {"size": 16, "color": PALE}),
 ])
 
 # 2. Problem and solution

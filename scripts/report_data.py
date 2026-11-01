@@ -18,7 +18,7 @@ REG_NO = "23F10CSE00486"
 PROGRAMME = "B.Tech CSE, Semester VII, 2026-27"
 UNIVERSITY = "Manipal University Jaipur"
 COURSE = "Software Testing"
-GUIDE = "[Faculty name]"          # fill in before submission
+GUIDE = "Dr. Manmohan Sharma"
 REPO_URL = "github.com/sarimkhan-sketch/library-management-testing"
 PROJECT = "Library Management System"
 
