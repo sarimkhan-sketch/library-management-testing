@@ -1,0 +1,9 @@
+[project]
+name = "library-management-testing"
+version = "1.0.0"
+description = "Library Management REST API (Flask + SQLite) with a pytest test suite"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
